@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "_id": "69e3e3bdaa199b7b0a658a3d",
+      "first": "Angella",
+      "last": "Namulindwa",
+      "email": "angellanamulindwa020@gmail.com",
+      "password": "$2a$10$lZ9p2ssRTaZcDdUE1EfxpufVKQuuz/YKA5YSWWPmKSgNuqIclzB22",
+      "phone": "",
+      "bio": "",
+      "location": "",
+      "avatar": null,
+      "role": "admin",
+      "verified": true,
+      "resetToken": null,
+      "resetTokenExpiry": null,
+      "createdAt": "2026-04-18T20:04:13.804Z",
+      "updatedAt": "2026-04-18T20:09:08.837Z",
+      "__v": 0
+    }
+  ],
+  "items": [],
+  "conversations": [],
+  "notifications": []
+}

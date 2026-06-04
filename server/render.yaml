@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: foundit-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGO_URI
+        value: mongodb://angellanamulindwa020_db_user:N%40mu123@ac-zi3sija-shard-00-00.a33sinq.mongodb.net:27017,ac-zi3sija-shard-00-01.a33sinq.mongodb.net:27017,ac-zi3sija-shard-00-02.a33sinq.mongodb.net:27017/foundit?ssl=true&replicaSet=atlas-12jhur-shard-0&authSource=admin&retryWrites=true
+      - key: JWT_SECRET
+        value: foundit_super_secret_key_2026
+      - key: PORT
+        value: 5000
