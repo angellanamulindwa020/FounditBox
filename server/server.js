@@ -23,6 +23,7 @@ app.use("/api/subscription", require("./routes/subscription"));
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "..", "index.html")));
 app.get("/style.css", (_req, res) => res.sendFile(path.join(__dirname, "..", "style.css")));
 app.get("/script.js", (_req, res) => res.sendFile(path.join(__dirname, "..", "script.js")));
+app.get("/googlef3ae05036821fdd3.html", (_req, res) => res.sendFile(path.join(__dirname, "..", "googlef3ae05036821fdd3.html")));
 
 // Global error handler
 app.use((err, req, res, next) => {
