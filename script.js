@@ -1,7 +1,7 @@
 // ===== CONFIG =====
 const API = ["localhost", "127.0.0.1", "foundit-box.local"].includes(window.location.hostname)
   ? `${window.location.protocol}//${window.location.hostname}:5000/api`
-  : "https://founditbox.com/api";
+  : `${window.location.protocol}//${window.location.host}/api`;
 
 // ===== HELPERS =====
 function getToken() { return localStorage.getItem("foundItBoxToken"); }
