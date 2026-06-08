@@ -27,6 +27,31 @@ router.get("/claims-count", auth, async (req, res) => {
   }
 });
 
+// GET /api/items/my-claims — all claims on current user's items + claims made by current user
+router.get("/my-claims", auth, async (req, res) => {
+  try {
+    // Claims on items I posted
+    const myItems = await Item.find({ postedBy: req.user.id }).select("name claims");
+    const claimsOnMyItems = [];
+    myItems.forEach(item => {
+      (item.claims || []).forEach(c => {
+        claimsOnMyItems.push({ ...c.toObject(), itemName: item.name, itemId: item._id });
+      });
+    });
+    // Claims I made on others' items
+    const othersItems = await Item.find({ "claims.claimedBy": req.user.id }).select("name claims");
+    const myClaimsMade = [];
+    othersItems.forEach(item => {
+      (item.claims || []).filter(c => c.claimedBy.toString() === req.user.id).forEach(c => {
+        myClaimsMade.push({ ...c.toObject(), itemName: item.name, itemId: item._id });
+      });
+    });
+    res.json([...claimsOnMyItems, ...myClaimsMade]);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // GET /api/items/:id — single item with image
 router.get("/:id", auth, async (req, res) => {
   try {
@@ -63,8 +88,11 @@ router.post("/", auth, async (req, res) => {
         const oppositeStatus = status === "Lost" ? "Found" : "Lost";
         const matches = await Item.find({ status: oppositeStatus, category, postedBy: { $ne: req.user.id } });
         for (const match of matches) {
-          await Notification.create({ user: req.user.id, type: "match", title: "Potential Match Found!", desc: `Your ${status.toLowerCase()} "${name}" may match "${match.name}" by ${match.postedByName}.`, itemId: match._id });
-          await Notification.create({ user: match.postedBy, type: "match", title: "Potential Match Found!", desc: `Your ${oppositeStatus.toLowerCase()} "${match.name}" may match "${name}" posted by ${poster.first} ${poster.last}.`, itemId: item._id });
+          // Avoid duplicate match notifications
+          const exists1 = await Notification.findOne({ user: req.user.id, type: "match", itemId: match._id });
+          const exists2 = await Notification.findOne({ user: match.postedBy, type: "match", itemId: item._id });
+          if (!exists1) await Notification.create({ user: req.user.id, type: "match", title: "Potential Match Found!", desc: `Your ${status.toLowerCase()} "${name}" may match "${match.name}" by ${match.postedByName}.`, itemId: match._id });
+          if (!exists2) await Notification.create({ user: match.postedBy, type: "match", title: "Potential Match Found!", desc: `Your ${oppositeStatus.toLowerCase()} "${match.name}" may match "${name}" posted by ${poster.first} ${poster.last}.`, itemId: item._id });
         }
       } catch (e) { console.error("Notification error:", e.message); }
     })();

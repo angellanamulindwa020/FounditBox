@@ -52,7 +52,7 @@ router.post("/:id/messages", auth, async (req, res) => {
     if (!convo) return res.status(404).json({ message: "Conversation not found" });
 
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    convo.messages.push({ from: "me", text, time });
+    convo.messages.push({ from: req.user.id, text, time });
     convo.lastMsg = text;
     await convo.save();
     await convo.populate("participants", "first last avatar");

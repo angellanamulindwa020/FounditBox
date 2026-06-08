@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema({
-  from:   { type: String, enum: ["me", "them"], required: true },
+  from:   { type: String, required: true },
   text:   { type: String, required: true },
   time:   { type: String },
 }, { _id: false });

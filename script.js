@@ -335,6 +335,10 @@ function setupEventListeners() {
   if (form) {
     form.addEventListener("submit", async e => {
       e.preventDefault();
+      const btn = form.querySelector("button[type=submit]");
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
       try {
         const newItem = await api("POST", "/items", {
           name: document.getElementById("fName").value.trim(),
@@ -347,7 +351,6 @@ function setupEventListeners() {
           img: pendingItemImg || null,
         });
         items.unshift(newItem);
-        // Refresh notifications (backend created them)
         notifications = await api("GET", "/notifications");
         renderAll();
         updateProfileUI();
@@ -359,6 +362,10 @@ function setupEventListeners() {
         showToast(`"${newItem.name}" reported & verified`, "success");
         updateBadges();
       } catch (err) { showToast(err.message, "error"); }
+      finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Report';
+      }
     });
   }
 
@@ -459,8 +466,8 @@ function renderRecentActivity() {
 function renderMatches() {
   const el = document.getElementById("matchList");
   const myId = currentUser._id;
-  const myItems = items.filter(i => (i.postedBy?._id || i.postedBy) === myId);
-  const otherItems = items.filter(i => (i.postedBy?._id || i.postedBy) !== myId);
+  const myItems = items.filter(i => (i.postedBy?._id || i.postedBy)?.toString() === myId);
+  const otherItems = items.filter(i => (i.postedBy?._id || i.postedBy)?.toString() !== myId);
   const matches = [];
   myItems.forEach(mine => {
     const opp = mine.status === "Lost" ? "Found" : "Lost";
@@ -575,11 +582,10 @@ async function openModal(id) {
     <div class="modal-actions">
       ${!isOwner && isVerified && !myClaim && item.status !== "Returned" ? `
         <button class="btn-primary" onclick="claimItem('${item._id}')"><i class="fa-solid fa-hand-holding"></i> Claim Item</button>` : ""}
+      ${!isOwner && isVerified ? `<button class="btn-outline" onclick="startChat('${item._id}')"><i class="fa-solid fa-comments"></i> Contact Reporter</button>` : ""}
       ${!isOwner && !isVerified ? `
         <span style="font-size:0.82rem;color:#ef4444"><i class="fa-solid fa-lock"></i> Verified users only can claim or contact reporter</span>` : ""}
-      ${!isOwner && isVerified && myClaim?.claimStatus === "Approved" ? `<button class="btn-outline" onclick="startChat('${item._id}')"><i class="fa-solid fa-comments"></i> Contact Reporter</button>` : ""}
-      ${!isOwner && isVerified && !myClaim ? `<span style="font-size:0.82rem;color:var(--text-muted)"><i class="fa-solid fa-lock"></i> Claim this item first to contact the reporter</span>` : ""}
-      ${!isOwner && isVerified && myClaim && myClaim.claimStatus === "Pending" ? `<span style="font-size:0.82rem;color:#f59e0b"><i class="fa-solid fa-clock"></i> Awaiting claim approval to contact reporter</span>` : ""}
+      ${!isOwner && isVerified && myClaim && myClaim.claimStatus === "Pending" ? `<span style="font-size:0.82rem;color:#f59e0b"><i class="fa-solid fa-clock"></i> Your claim is awaiting approval</span>` : ""}
       ${!isOwner && isVerified && myClaim && myClaim.claimStatus === "Rejected" ? `<span style="font-size:0.82rem;color:#ef4444"><i class="fa-solid fa-xmark"></i> Your claim was rejected</span>` : ""}
       ${canMarkReceived ? `<button class="btn-outline" onclick="updateItemStatus('${item._id}','Returned','received')"><i class="fa-solid fa-circle-check"></i> Mark Received</button>` : ""}
       ${canMarkReturned ? `<button class="btn-outline" onclick="updateItemStatus('${item._id}','Returned','returned')"><i class="fa-solid fa-handshake"></i> Mark Returned</button>` : ""}
@@ -600,6 +606,8 @@ async function claimItem(itemId) {
 }
 
 async function updateClaim(itemId, claimId, claimStatus) {
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   try {
     const updated = await api("PATCH", `/items/${itemId}/claims/${claimId}`, { claimStatus });
     const idx = items.findIndex(i => i._id === itemId);
@@ -607,49 +615,43 @@ async function updateClaim(itemId, claimId, claimStatus) {
     showToast(`Claim ${claimStatus}`, "success");
     closeModal();
     renderClaims();
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 function renderClaims() {
   const el = document.getElementById("claimsList");
   if (!el) return;
-  const myId = currentUser._id;
-  // Collect all claims across all items
-  const allClaims = [];
-  items.forEach(item => {
-    (item.claims || []).forEach(c => {
-      allClaims.push({ ...c, itemName: item.name, itemId: item._id, isOwner: (item.postedBy?._id || item.postedBy) === myId });
-    });
-  });
-  if (!allClaims.length) {
-    el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-hand-holding"></i><p>No claims yet</p></div>`;
-    return;
-  }
-  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem">
-    <thead><tr style="border-bottom:2px solid var(--border);text-align:left">
-      <th style="padding:10px 12px">Item</th>
-      <th style="padding:10px 12px">Claimed By</th>
-      <th style="padding:10px 12px">Claim Date</th>
-      <th style="padding:10px 12px">Message</th>
-      <th style="padding:10px 12px">Status</th>
-    </tr></thead>
-    <tbody>
-      ${allClaims.map(c => `
-        <tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:10px 12px;font-weight:500">${c.itemName}</td>
-          <td style="padding:10px 12px">${c.claimedByName || "—"}</td>
-          <td style="padding:10px 12px">${new Date(c.claimDate).toLocaleDateString()}</td>
-          <td style="padding:10px 12px;color:var(--text-muted)">${c.message || "—"}</td>
-          <td style="padding:10px 12px">
-            <span class="status-tag ${c.claimStatus === "Approved" ? "Found" : c.claimStatus === "Rejected" ? "Lost" : ""}" 
-              style="${c.claimStatus === "Pending" ? "background:#f59e0b22;color:#f59e0b" : ""}">
-              ${c.claimStatus}
-            </span>
-          </td>
-        </tr>`).join("")}
-    </tbody>
-  </table>`;
-}
+  // Fetch claims from API since items array doesn't include claims field
+  api("GET", "/items/my-claims").then(allClaims => {
+    if (!allClaims.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-hand-holding"></i><p>No claims yet</p></div>`;
+      return;
+    }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+      <thead><tr style="border-bottom:2px solid var(--border);text-align:left">
+        <th style="padding:10px 12px">Item</th>
+        <th style="padding:10px 12px">Claimed By</th>
+        <th style="padding:10px 12px">Date</th>
+        <th style="padding:10px 12px">Message</th>
+        <th style="padding:10px 12px">Status</th>
+      </tr></thead>
+      <tbody>
+        ${allClaims.map(c => `
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 12px;font-weight:500">${c.itemName}</td>
+            <td style="padding:10px 12px">${c.claimedByName || "—"}</td>
+            <td style="padding:10px 12px">${c.claimDate ? new Date(c.claimDate).toLocaleDateString() : "—"}</td>
+            <td style="padding:10px 12px;color:var(--text-muted)">${c.message || "—"}</td>
+            <td style="padding:10px 12px">
+              <span class="status-tag ${c.claimStatus === "Approved" ? "Found" : c.claimStatus === "Rejected" ? "Lost" : ""}"
+                style="${c.claimStatus === "Pending" ? "background:#f59e0b22;color:#f59e0b" : ""}">
+                ${c.claimStatus}
+              </span>
+            </td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+  }).catch(() => {});
 
 async function updateItemStatus(id, status, label) {
   try {
@@ -761,7 +763,7 @@ function openConversation(id) {
     </div>
     <div class="chat-messages" id="chatMessages">
       ${(convo.messages || []).map(m => `
-        <div class="msg ${m.from === "me" ? "sent" : "received"}">
+        <div class="msg ${m.from === currentUser._id || m.from === "me" ? "sent" : "received"}">
           <div class="msg-bubble">${m.text}</div>
           <div class="msg-time">${m.time || ""}</div>
         </div>`).join("")}
@@ -822,6 +824,17 @@ function showToast(msg, type = "info") {
   toast.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${msg}`;
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => toast.classList.add("hidden"), 3500);
+}
+
+function btnLoading(btn, loading, originalHTML) {
+  if (loading) {
+    btn.disabled = true;
+    btn._original = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML || btn._original || btn.innerHTML;
+  }
 }
 
 // ===== ADMIN =====
@@ -954,6 +967,8 @@ function renderAdminItems(list) {
 
 async function adminDeleteItem(id, name) {
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   try {
     await api("DELETE", `/admin/items/${id}`);
     adminItems = adminItems.filter(i => i._id !== id);
@@ -962,11 +977,13 @@ async function adminDeleteItem(id, name) {
     updateAdminStats();
     renderAll();
     showToast(`"${name}" deleted`, "info");
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 async function adminDeleteUser(id, name) {
   if (!confirm(`Delete user "${name}" and all their items? This cannot be undone.`)) return;
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   try {
     await api("DELETE", `/admin/users/${id}`);
     adminUsers = adminUsers.filter(u => u._id !== id);
@@ -977,10 +994,12 @@ async function adminDeleteUser(id, name) {
     updateAdminStats();
     renderAll();
     showToast(`User "${name}" deleted`, "info");
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 async function approveUser(id, verified) {
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   try {
     const updated = await api("PATCH", `/admin/users/${id}/verify`, { verified });
     const idx = adminUsers.findIndex(u => u._id === id);
@@ -988,10 +1007,12 @@ async function approveUser(id, verified) {
     filterAdminUsers();
     updateAdminStats();
     showToast(`User ${verified ? "approved" : "revoked"}`, verified ? "success" : "info");
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 async function approveItem(id, verified) {
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   try {
     const updated = await api("PATCH", `/admin/items/${id}/verify`, { verified });
     const idx = adminItems.findIndex(i => i._id === id);
@@ -1002,10 +1023,12 @@ async function approveItem(id, verified) {
     updateAdminStats();
     renderAll();
     showToast(`Item ${verified ? "approved" : "revoked"}`, verified ? "success" : "info");
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 async function toggleUserRole(id, currentRole) {
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   const newRole = currentRole === "admin" ? "user" : "admin";
   try {
     const updated = await api("PATCH", `/admin/users/${id}/role`, { role: newRole });
@@ -1014,7 +1037,7 @@ async function toggleUserRole(id, currentRole) {
     filterAdminUsers();
     updateAdminStats();
     showToast(`User role updated to ${newRole}`, "success");
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 function renderAdminClaims() {
@@ -1066,6 +1089,8 @@ function renderAdminClaims() {
 }
 
 async function adminUpdateClaim(itemId, claimId, claimStatus) {
+  const btn = event.target.closest("button");
+  btnLoading(btn, true);
   try {
     const updated = await api("PATCH", `/items/${itemId}/claims/${claimId}`, { claimStatus });
     const idx = adminItems.findIndex(i => i._id === itemId);
@@ -1074,7 +1099,7 @@ async function adminUpdateClaim(itemId, claimId, claimStatus) {
     renderClaims();
     renderStats();
     showToast(`Claim ${claimStatus}`, "success");
-  } catch (err) { showToast(err.message, "error"); }
+  } catch (err) { showToast(err.message, "error"); btnLoading(btn, false); }
 }
 
 // ===== SUBSCRIPTION =====
