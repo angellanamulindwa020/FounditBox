@@ -580,13 +580,23 @@ async function openModal(id) {
     </div>` : ""}
 
     <div class="modal-actions">
-      ${!isOwner && isVerified && !myClaim && item.status !== "Returned" ? `
-        <button class="btn-primary" onclick="claimItem('${item._id}')"><i class="fa-solid fa-hand-holding"></i> Claim Item</button>` : ""}
-      ${!isOwner && isVerified ? `<button class="btn-outline" onclick="startChat('${item._id}')"><i class="fa-solid fa-comments"></i> Contact Reporter</button>` : ""}
       ${!isOwner && !isVerified ? `
         <span style="font-size:0.82rem;color:#ef4444"><i class="fa-solid fa-lock"></i> Verified users only can claim or contact reporter</span>` : ""}
-      ${!isOwner && isVerified && myClaim && myClaim.claimStatus === "Pending" ? `<span style="font-size:0.82rem;color:#f59e0b"><i class="fa-solid fa-clock"></i> Your claim is awaiting approval</span>` : ""}
-      ${!isOwner && isVerified && myClaim && myClaim.claimStatus === "Rejected" ? `<span style="font-size:0.82rem;color:#ef4444"><i class="fa-solid fa-xmark"></i> Your claim was rejected</span>` : ""}
+
+      ${/* FOUND item: must claim first, then get approved */ ""}
+      ${!isOwner && isVerified && item.status === "Found" && !myClaim ? `
+        <button class="btn-primary" onclick="claimItem('${item._id}')"><i class="fa-solid fa-hand-holding"></i> Claim Item</button>
+        <span style="font-size:0.82rem;color:var(--text-muted)"><i class="fa-solid fa-lock"></i> Claim first to contact the reporter</span>` : ""}
+      ${!isOwner && isVerified && item.status === "Found" && myClaim?.claimStatus === "Pending" ? `
+        <span style="font-size:0.82rem;color:#f59e0b"><i class="fa-solid fa-clock"></i> Awaiting claim approval to contact reporter</span>` : ""}
+      ${!isOwner && isVerified && item.status === "Found" && myClaim?.claimStatus === "Approved" ? `
+        <button class="btn-outline" onclick="startChat('${item._id}')"><i class="fa-solid fa-comments"></i> Contact Reporter</button>` : ""}
+      ${!isOwner && isVerified && item.status === "Found" && myClaim?.claimStatus === "Rejected" ? `
+        <span style="font-size:0.82rem;color:#ef4444"><i class="fa-solid fa-xmark"></i> Your claim was rejected</span>` : ""}
+
+      ${/* LOST item: contact directly */ ""}
+      ${!isOwner && isVerified && item.status === "Lost" ? `
+        <button class="btn-outline" onclick="startChat('${item._id}')"><i class="fa-solid fa-comments"></i> Contact Reporter</button>` : ""}
       ${canMarkReceived ? `<button class="btn-outline" onclick="updateItemStatus('${item._id}','Returned','received')"><i class="fa-solid fa-circle-check"></i> Mark Received</button>` : ""}
       ${canMarkReturned ? `<button class="btn-outline" onclick="updateItemStatus('${item._id}','Returned','returned')"><i class="fa-solid fa-handshake"></i> Mark Returned</button>` : ""}
     </div>`;
