@@ -438,6 +438,12 @@ function navigate(section) {
   document.getElementById("sidebar").classList.remove("open");
   if (section === "admin") loadAdminPanel();
   if (section === "subscription") loadSubscription();
+  if (section === "chat") {
+    api("GET", "/conversations").then(convos => {
+      conversations = convos;
+      renderConversations();
+    }).catch(() => {});
+  }
 }
 
 function renderStats() {
@@ -812,9 +818,9 @@ function scrollChat() { const msgs = document.getElementById("chatMessages"); if
 async function startChat(itemId) {
   try {
     const convo = await api("POST", "/conversations", { itemId });
-    const exists = conversations.find(c => c._id === convo._id);
-    if (!exists) conversations.unshift(convo);
-    else conversations[conversations.indexOf(exists)] = convo;
+    // Remove any existing copy and replace with fresh one from server
+    conversations = conversations.filter(c => c._id !== convo._id);
+    conversations.unshift(convo);
     closeModal();
     navigate("chat");
     renderConversations();
