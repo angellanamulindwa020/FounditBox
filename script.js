@@ -652,6 +652,7 @@ function renderClaims() {
       </tbody>
     </table>`;
   }).catch(() => {});
+}
 
 async function updateItemStatus(id, status, label) {
   try {
