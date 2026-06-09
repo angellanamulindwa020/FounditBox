@@ -429,6 +429,8 @@ function renderAll() {
   renderItems(items); renderNotifications(); renderConversations(); renderClaims();
 }
 
+let chatPollInterval = null;
+
 function navigate(section) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -438,12 +440,37 @@ function navigate(section) {
   document.getElementById("sidebar").classList.remove("open");
   if (section === "admin") loadAdminPanel();
   if (section === "subscription") loadSubscription();
+
+  // Stop any existing poll
+  if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+
   if (section === "chat") {
-    api("GET", "/conversations").then(convos => {
-      conversations = convos;
-      renderConversations();
-    }).catch(() => {});
+    const refreshChat = () => {
+      api("GET", "/conversations").then(convos => {
+        conversations = convos;
+        renderConversations();
+        // If a conversation is open, refresh its messages too
+        if (activeConvo) {
+          const updated = convos.find(c => c._id === activeConvo);
+          if (updated) {
+            const msgs = document.getElementById("chatMessages");
+            if (msgs) {
+              const wasAtBottom = msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 20;
+              msgs.innerHTML = (updated.messages || []).map(m => `
+                <div class="msg ${m.from === currentUser._id || m.from === "me" ? "sent" : "received"}">
+                  <div class="msg-bubble">${m.text}</div>
+                  <div class="msg-time">${m.time || ""}</div>
+                </div>`).join("");
+              if (wasAtBottom) scrollChat();
+            }
+          }
+        }
+      }).catch(() => {});
+    };
+    refreshChat();
+    chatPollInterval = setInterval(refreshChat, 5000);
   }
+}
 }
 
 function renderStats() {
