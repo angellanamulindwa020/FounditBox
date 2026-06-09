@@ -471,7 +471,6 @@ function navigate(section) {
     chatPollInterval = setInterval(refreshChat, 5000);
   }
 }
-}
 
 function renderStats() {
   document.getElementById("statTotal").textContent = items.length;
