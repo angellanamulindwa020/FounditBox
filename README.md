@@ -1,32 +1,26 @@
 # Foundit Box — A Community-Based Personal Property Recovery System
 
-## Live Site
-[https://www.founditbox.com](https://www.founditbox.com)
-
----
 
 ## Project Title
 A Community-Based Personal Property Recovery System
 
----
 
 ## Problem
 
 The pervasive loss of valuable documents and low-monetary value personal items within open communities, such as the Central Region of Kampala, presents persistent challenges. Current recovery methods are predominantly manual, informal and lack the verifiable structure necessary to foster trust and ensure successful recovery.
 
-In open communities like universities, campuses, and public spaces, lost and found management is handled informally — through word of mouth, WhatsApp groups, physical notice boards, or handing items to security. These methods have no central record, items get forgotten, there is no way for the person who lost something to know if it was found, and there is no accountability for who handled what.
+In open communities like universities, campuses, and public spaces, lost and found management is handled informally through word of mouth, WhatsApp groups, physical notice boards, or handing items to security. These methods have no central record, items get forgotten, there is no way for the person who lost something to know if it was found, and there is no accountability for who handled what.
 
-The emergence of digital platforms and Information Technology has indicated a significant shift from manual processes to a digitalized way of doing things. This calls for the urgent need for the adoption of new technology — thus the development of ICT-based ideas like Foundit Box to solve real-world challenges like lost items, bridging the gap between manual recovery processes and the digital divide in open communities in areas like the Central Region of Kampala.
+The emergence of digital platforms and Information Technology has indicated a significant shift from manual processes to a digitalized way of doing things. This calls for the urgent need for the adoption of new technology thus the development of ICT-based ideas like Foundit Box to solve real-world challenges like lost items, bridging the gap between manual recovery processes and the digital divide in open communities in areas like the Central Region of Kampala.
 
----
 
 ## Solution
 
 Foundit Box provides a structured digital platform where users can report lost or found items, and the community can help reunite people with their belongings. When an item is reported, the system automatically detects potential matches with other reports and notifies both parties. Users can claim found items, and once approved by the item owner, they can message each other directly to arrange the return. An admin oversees the platform — verifying users, approving item listings, and managing claims — ensuring only legitimate reports are visible. This replaces informal, scattered methods with a transparent, accountable, and searchable system accessible from any device.
 
----
 
-## Installation & Setup (For Developers)
+
+## SetUp Instructions 
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -67,29 +61,11 @@ Server running on port 5000
 ### Step 5 — Open the App
 Go to `http://localhost:5000` in your browser.
 
----
+
 
 ## Admin Setup
 To give a user admin access, run from the `server` folder:
 ```bash
 node makeAdmin.js your@email.com
-```
 
----
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML, CSS, Vanilla JavaScript |
-| Backend | Node.js, Express.js |
-| Database | MongoDB Atlas |
-| Auth | JWT, bcrypt |
-| Hosting | Railway |
-| CDN/DNS | Cloudflare |
-
----
-
-## Developer
-**Namulindwa Angella**  
-[angellanamulindwa020@gmail.com](mailto:angellanamulindwa020@gmail.com)
