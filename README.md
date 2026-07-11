@@ -27,7 +27,7 @@ Foundit Box provides a structured digital platform where users can report lost o
 
 ### Step 1 Clone the Repository
 ```bash
-git clone https://github.com/angellanamulindwa020/foundit.git
+git clone https://github.com/angellanamulindwa020/FounditBox.git
 cd foundit
 ```
 
