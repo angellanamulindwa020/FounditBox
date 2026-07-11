@@ -1,4 +1,4 @@
-# Foundit Box — A Community-Based Personal Property Recovery System
+
 
 
 ## Project Title
@@ -27,19 +27,19 @@ Foundit Box provides a structured digital platform where users can report lost o
 - Git
 - A MongoDB Atlas account
 
-### Step 1 — Clone the Repository
+### Step 1 Clone the Repository
 ```bash
 git clone https://github.com/angellanamulindwa020/foundit.git
 cd foundit
 ```
 
-### Step 2 — Install Dependencies
+### Step 2  Install Dependencies
 ```bash
 cd server
 npm install
 ```
 
-### Step 3 — Configure Environment Variables
+### Step 3  Configure Environment Variables
 Create a `.env` file inside the `server` folder with:
 ```
 MONGO_URI=your_mongodb_connection_string
@@ -47,7 +47,7 @@ JWT_SECRET=your_secret_key
 PORT=5000
 ```
 
-### Step 4 — Start the Server
+### Step 4  Start the Server
 ```bash
 node server.js
 ```
@@ -58,7 +58,7 @@ MongoDB connected
 Server running on port 5000
 ```
 
-### Step 5 — Open the App
+### Step 5 Open the App
 Go to `http://localhost:5000` in your browser.
 
 
